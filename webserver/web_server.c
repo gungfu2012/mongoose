@@ -31,7 +31,17 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 		case MG_EV_WEBSOCKET_FRAME :
 			if(wc_connected == true && *((int*)(nc->user_data)) == wc_id)
 			{
-				;
+				int *client_id = malloc(sizeof(int));
+				memcpy(client_id,wsmsg->data,sizeof(int));
+				for(c = mg_next(nc->mgr,NULL);c !=NULL; c = mg_next(nc->mgr,c))
+				{
+					if(*((int *)(c->user_data)) == *client_id)
+					{
+						mg_send(c,(wsmsg->data+sizeof(int)),wsmsg->size-sizeof(int));
+						break;
+					}
+				}
+				free(client_id);
 			}
 			break;
 		//deal with recv data from client
@@ -103,7 +113,7 @@ int main(void) {
   mg_set_protocol_http_websocket(nc);
 
   for (;;) {
-    mg_mgr_poll(&mgr, 1000);
+    mg_mgr_poll(&mgr, 600);
   }
   mg_mgr_free(&mgr);
 
