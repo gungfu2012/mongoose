@@ -10,7 +10,7 @@ static const int wc_id = 99999;// webclient connection id
 int nc_id_cur = 0;//current avalible id 
 int nc_id[NC_ID_MAX];//nc_id pool
 struct mg_str wc_uri; 
-static const char *s_http_port = "8000";
+static const char *s_http_port = "8080";
 
 static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	struct http_message *hmsg = (struct http_message *) p;
@@ -113,7 +113,7 @@ int main(void) {
   mg_set_protocol_http_websocket(nc);
 
   for (;;) {
-    mg_mgr_poll(&mgr, 600);
+    mg_mgr_poll(&mgr, 100);
   }
   mg_mgr_free(&mgr);
 
