@@ -23,18 +23,34 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 		case MG_EV_WEBSOCKET_HANDSHAKE_DONE :
 			if(mg_strstr(hmsg->uri,wc_uri)!=NULL)
 			{
+			  //debug
+			  printf("ws handshake has done\n");
 				wc_connected = true;
 				nc->user_data = &wc_id; 
+			  //debug
+			  printf("no fault\n");
 			}
 			break;
 		//deal with websocket data from webclient
 		case MG_EV_WEBSOCKET_FRAME :
+			//debug
+			printf("get ws message\n");
+			if(nc->user_data == NULL)
+			{
+			  break;
+			}
 			if(wc_connected == true && *((int*)(nc->user_data)) == wc_id)
 			{
 				int *client_id = malloc(sizeof(int));
+				//debug
+				printf("malloc client id mem\n");
 				memcpy(client_id,wsmsg->data,sizeof(int));
+				//debug
+				printf("memcpy client id\n");
 				for(c = mg_next(nc->mgr,NULL);c !=NULL; c = mg_next(nc->mgr,c))
 				{
+					if(c->user_data == NULL)
+					  continue;
 					if(*((int *)(c->user_data)) == *client_id)
 					{
 						mg_send(c,(wsmsg->data+sizeof(int)),wsmsg->size-sizeof(int));
@@ -43,6 +59,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 				}
 				free(client_id);
 			}
+			//debug
+			printf("no fault\n");
 			break;
 		//deal with recv data from client
 		case MG_EV_RECV :
@@ -61,7 +79,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 					//send to webclient
 					for(c = mg_next(nc->mgr,NULL);c != NULL;c = mg_next(nc->mgr,c))
 					{
-						if(c->user_data != NULL && *((int *)(c->user_data)) == wc_id)
+						if(c->user_data == NULL)
+						  continue;
+						if(*((int *)(c->user_data)) == wc_id)
 						{
 							mg_send_websocket_frame(c,WEBSOCKET_OP_BINARY,intp,sizeof(int)+*recvcount);
 							mbuf_remove(&(nc->recv_mbuf),*recvcount);
@@ -77,7 +97,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 					memcpy(intp+sizeof(int),nc->recv_mbuf.buf,*recvcount);
 					for(c = mg_next(nc->mgr,NULL);c != NULL;c = mg_next(nc->mgr,c))
 					{
-						if(c->user_data !=NULL && *((int*)(c->user_data)) == wc_id)
+						if(c->user_data == NULL)
+						  continue;
+						if(*((int*)(c->user_data)) == wc_id)
 						{
 							mg_send_websocket_frame(c,WEBSOCKET_OP_BINARY,intp,sizeof(int)+*recvcount);
 							mbuf_remove(&(nc->recv_mbuf),*recvcount);

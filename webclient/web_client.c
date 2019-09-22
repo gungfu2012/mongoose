@@ -42,7 +42,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 	  if(nc->user_data == NULL)
 	  {
 		//do nothing
-		;
+		printf("get something unknown\n");
 	  }
 	  else if(*((int*)(nc->user_data)) != wc_id)
 	  {
@@ -51,7 +51,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 		memcpy(intp+sizeof(int),nc->recv_mbuf.buf,*recvcount);
 		for(c = mg_next(nc->mgr,NULL);c != NULL;c = mg_next(nc->mgr,c))
 		{
-		  if(c->user_data !=NULL && *((int*)(c->user_data)) == wc_id)
+		  if(c->user_data == NULL)
+			continue;
+		  if(*((int*)(c->user_data)) == wc_id)
 		  {
 			mg_send_websocket_frame(c,WEBSOCKET_OP_BINARY,intp,sizeof(int)+*recvcount);
 			mbuf_remove(&(nc->recv_mbuf),*recvcount);
@@ -77,6 +79,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 	  
 	  for(c = mg_next(nc->mgr,NULL);c !=NULL; c = mg_next(nc->mgr,c))
 	  {
+		if(c->user_data == NULL)
+		  continue;
 		if(*((int *)(c->user_data)) == *client_id)
 		{
 		  mg_send(c,(wsmsg->data+sizeof(int)),wsmsg->size-sizeof(int));
